@@ -1,0 +1,30 @@
+{
+  "name": "wixfiles",
+  "version": "0.0.1",
+  "description": "restore files for wix project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/morozig/wixfiles.git"
+  },
+  "keywords": [
+    "wix",
+    "msi",
+    "wixproj",
+    "light"
+  ],
+  "author": "morozig",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/morozig/wixfiles/issues"
+  },
+  "homepage": "https://github.com/morozig/wixfiles#readme",
+  "dependencies": {
+    "async": "^1.5.2",
+    "cheerio": "^0.20.0",
+    "fs-extra": "^0.26.5"
+  }
+}
