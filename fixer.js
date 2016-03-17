@@ -15,6 +15,9 @@ exports.fixErrors = (errorsFile, filesDir, callback) => {
             var wxsFile = m[1];
             var lineNumber = parseInt(m[2]);
             var missedFile = m[3];
+            if (!path.isAbsolute(missedFile)){
+                missedFile = path.join(path.dirname(errorsFile), missedFile);
+            }
             errors.push({wxsFile, lineNumber, missedFile});
         }
         async.eachSeries(errors, (error, callback) => {
@@ -23,8 +26,16 @@ exports.fixErrors = (errorsFile, filesDir, callback) => {
             var missedFile = error.missedFile;
             fs.readFile(wxsFile, 'utf8', (err, text) => {
                 if (err) callback(err);
-                var line = text.split(/\r\n|\n/)[lineNumber - 1];
-                var source = line.match(SOURCE_RE)[1];
+                var lines = text.split(/\r\n|\n/);
+                var source = '';
+                for (var i = lineNumber - 1; i < lines.length; i++){
+                    var line = lines[i];
+                    var match = line.match(SOURCE_RE);
+                    if (match){
+                        source = match[1];
+                        break;
+                    }
+                }
                 var $ = cheerio.load(text, {
                     xmlMode: true
                 });
