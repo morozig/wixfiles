@@ -3,7 +3,7 @@ var async = require('async');
 var cheerio = require('cheerio');
 var path = require('path');
 
-const ERROR_RE = /(.+\.wxs)\((\d+)\): error LGHT0103: .+'(.+)'/gi;
+const ERROR_RE = /(.+\.wxs)\((\d+)\): error LGHT0103: .+'(.+)'.+\[(.+)\]/gi;
 const SOURCE_RE = /Source[\s]*=[\s]*"([^"]+)"/;
 const BAD_SYMBOLS_RE = /[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g;
 
@@ -15,8 +15,9 @@ exports.fixErrors = (errorsFile, filesDir, callback) => {
             var wxsFile = m[1];
             var lineNumber = parseInt(m[2]);
             var missedFile = m[3];
+            var wixProjFile = m[4];
             if (!path.isAbsolute(missedFile)){
-                missedFile = path.join(path.dirname(errorsFile), missedFile);
+                missedFile = path.join(path.dirname(wixProjFile), missedFile);
             }
             errors.push({wxsFile, lineNumber, missedFile});
         }
@@ -42,13 +43,25 @@ exports.fixErrors = (errorsFile, filesDir, callback) => {
                 var escapedSource = source.replace(BAD_SYMBOLS_RE, "\\$&");
                 var fileId = $('File[Source=' + escapedSource + ']')
                     .attr('Id');
-                fileId = fileId || path.basename(source);
-                console.log(fileId);
+                if (!fileId){
+                    var sourceWithoutVars = source.match(/([^\)]+)/g).pop();
+                    fileId = path.basename(sourceWithoutVars);
+                }
                 var localFile = path.join(filesDir, fileId);
                 var targetDir = path.dirname(missedFile);
                 fs.ensureDir(targetDir, (err) => {
                     if (err) callback(err);
-                    fs.copy(localFile, missedFile, callback);
+                    fs.copy(localFile, missedFile, (err) => {
+                        if (err){
+                            if (err.code === "ENOENT"){
+                                console.log(err.message);
+                                callback(null);
+                            } else callback(err);
+                        } else {
+                            console.log('Copied:', fileId);
+                            callback(null);
+                        }
+                    });
                 });
             });
         },
