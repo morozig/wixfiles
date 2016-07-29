@@ -5,6 +5,7 @@ var path = require('path');
 
 const ERROR_RE = /(.+\.wxs)\((\d+)\): error LGHT0103: .+'(.+)'.+\[(.+)\]/gi;
 const SOURCE_RE = /Source[\s]*=[\s]*"([^"]+)"/;
+const BINARY_SOURCE_FILE_RE = /SourceFile[\s]*=[\s]*"([^"]+)"/;
 const BAD_SYMBOLS_RE = /[!"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~]/g;
 
 exports.fixErrors = (errorsFile, filesDir, callback) => {
@@ -36,6 +37,19 @@ exports.fixErrors = (errorsFile, filesDir, callback) => {
                         source = match[1];
                         break;
                     }
+                }
+                if (source === ''){
+                    line = lines[lineNumber - 1];
+                    match = line.match(BINARY_SOURCE_FILE_RE);
+                    if (match){
+                        console.log('File is binary: "' + missedFile + '"');
+                    } else {
+                        console.log(
+                            'Could not find file: "' + missedFile + '"'
+                        );
+                    }
+                    callback(null);
+                    return;
                 }
                 var $ = cheerio.load(text, {
                     xmlMode: true
